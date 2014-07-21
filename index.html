@@ -59,7 +59,7 @@
 
         <section>
           <section>
-            <h1>Tasks should be:</h1>
+            <h1>Tasks should be&hellip;</h1>
           </section>
           <section>
             <header>
@@ -157,6 +157,7 @@
             <ul>
               <li>Fast</li>
               <li>Suports expiry</li>
+              <li>Atomic counters</li>
               <li>No persistence</li>
             </ul>
           </section>
@@ -167,6 +168,7 @@
             <ul>
               <li>Fast</li>
               <li>Suports expiry</li>
+              <li>Atomic counters</li>
               <li>(Mostly) persistent</li>
             </ul>
           </section>
@@ -263,19 +265,15 @@ tasks.add(3)
             <pre><code class="python">>>> from celery import chain
 >>> import tasks
 >>> c = chain(tasks.add.s(1, 2), tasks.add.s(3))
->>> c
-tasks.add(1, 2) | tasks.add(3)
+>>> dict(c)
+{'task': 'celery.chain', 'subtask_type': 'chain', 'kwargs': {'tasks': (tasks.add(1, 2), tasks.add(3))}, 'args': (), 'options': {}, 'immutable': False}
 >>> result = c()
 >>> result
 &lt;AsyncResult: cd36054d-755a-4745-bd32-0133ef026a04&gt;
->>> result.task_name
-'tasks.add'
->>> result.result
-6
->>> result.parent.task_name
-'tasks.add'
->>> result.parent.result
-3</code></pre>
+>>> result.task_name, result.result
+('tasks.add', 6)
+>>> result.parent.task_name, result.parent.result
+('tasks.add', 3)</code></pre>
           </section>
           <section>
             <header>
@@ -312,8 +310,8 @@ tasks.add(1, 2) | tasks.add(3)
               <pre><code class="python">>>> from celery import group
 >>> import tasks
 >>> g = group(tasks.add.s(1, 2), tasks.add.s(3, 4), tasks.add.s(5, 6))
->>> g
-(tasks.add(1, 2), tasks.add(3, 4), tasks.add(5, 6))
+>>> dict(g)
+{'task': 'celery.group', 'subtask_type': 'group', 'kwargs': {'tasks': (tasks.add(1, 2), tasks.add(3, 4), tasks.add(5, 6))}, 'args': (), 'options': {}, 'immutable': False}
 >>> result = g()
 >>> result
 &lt;GroupResult: 5272882a-3538-419a-915b-c28f7d119e8d [3f49e363-635e-46de-8034-8c07fe6bc302, 54d49c87-953a-4cec-b65e-c30883cc533f, d77ccfff-877b-4c3d-94b4-9a735ee989ba]&gt;
@@ -341,10 +339,153 @@ tasks.add(1, 2) | tasks.add(3)
 
         <section>
           <section>
-            <h1>Chord></h1>
-            <h2>A group with a callback</h2>
+            <h1>Chord</h1>
+            <h3>A group with a callback</h3>
           </section>
           <section>
+            <pre><code class="python">>>> from celery import chord
+>>> import tasks
+>>> c = chord([tasks.add.s(1, 2), tasks.add.s(3, 4)], tasks.tsum.s())
+>>> dict(c)
+{'task': 'celery.chord', 'subtask_type': 'chord', 'kwargs': {'body': tasks.tsum(), 'header': [tasks.add(1, 2), tasks.add(3, 4)]}, 'args': (), 'options': {}, 'immutable': False}
+>>> result = c()
+>>> result.task_name, result.result
+('tasks.tsum', 10)
+>>> result.parent
+&lt;GroupResult: 9309d954-669f-449c-8522-9247fb907faa [ff3d818a-bfd6-4139-a75d-95a2fcc8ea99, 5d748b16-8870-47eb-bd63-657f4f6a3350]&gt;
+>>> [r.result for r in result.parent.children]
+[3, 7]
+            </pre></code>
+          </section>
+          <section>
+            <header><h2>Under the hood</h2></header>
+            <pre><code class="python">class chord(Signature):
+    def run(self, header, body):
+        if 'chord_size' not in body:
+            body['chord_size'] = self.__length_hint__()
+        parent = app.backend.apply_chord(header, partial_args,
+                                         group_id, body)
+        body.parent = parent
+        return body
+            </code></pre>
+          </section>
+          <section>
+            <header><h2>Redis/Memcache backend support</h2></header>
+            <ul>
+              <li>Launch the header group</li>
+              <li>Increment a counter upon each success</li>
+              <li>Launch the callback once counter &gt; chord_size</li>
+            </ul>
+          </section>
+          <section>
+            <header><h2>Other backends</h2></header>
+            <ul>
+              <li>Launch the header group</li>
+              <li>Launch a polling task to periodically check group state</li>
+              <li>Launch the callback once the group is "ready"</li>
+          </section>
+        </section>
+
+        <section>
+          <h1>TODO: twitter example</h1>
+        </section>
+
+        <section>
+          <section>
+            <h1>Rules of thumb</h1>
+          </section>
+          <section>
+            <header>
+              <h2>Never block on another task</h2>
+            </header>
+            <pre><code class="python"># BAD
+@app.task
+def get_follower_names(user_id):
+    result = get_follower_ids.delay(user_id)
+    follower_ids = result.get() # <-- do not do this
+    return [u['name'] for u in twitter.users(follower_ids)]
+
+# GOOD
+@app.task
+def get_follower_names(follower_ids):
+    return [u['name'] for u in twitter.users(follower_ids)]
+
+chain = get_follower_ids.s(user_id) | get_follower_names.s()
+result = chain.delay()</code></pre>
+          </section>
+          <section>
+            <header>
+              <h2>Smallest (useful) unit of work</h2>
+            </header>
+            <pre><code class="python"># BAD
+@app.task
+def get_follower_names(user_id):
+    follower_ids = twitter.follower_ids(user_id)
+    return [u['name'] for u in twitter.users(follower_ids)]
+
+# GOOD
+@app.task
+def get_follower_names(follower_ids):
+    return [u['name'] for u in twitter.users(follower_ids)]
+
+chain = get_follower_ids.s(user_id) | get_follower_names.s()
+result = chain.delay()</code></pre>
+          </section>
+          <section>
+            <header>
+              <h2>Set soft & hard time limits</h2>
+            </header>
+          </section>
+          <section>
+            <header>
+              <h2>Use acks_late when possible</h2>
+            </header>
+            <blockquote cite="http://docs.celeryproject.org/en/master/reference/celery.app.task.html?#celery.app.task.Task.acks_late">
+              &ldquo;When enabled messages for this task will be acknowledged
+              after the task has been executed, and not just before which is the
+              default behavior.
+
+              Please note that this means the task may be executed twice if the
+              worker crashes mid execution (which may be acceptable for some
+              applications).&rdquo;
+            </blockquote>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h1>When tasks fail</h1>
+          </section>
+          <section>
+            <header>
+              <h2>Parallel</h2>
+            </header>
+            <pre><code class="python">>>> from celery import group
+>>> import tasks
+>>> result = group(tasks.fail.s(), tasks.succeed.s()).delay()
+>>> result.ready()
+True
+>>> [r.state for r in result.results]
+[u'FAILURE', u'SUCCESS']
+>>> [(r.state, r.result) for r in result.results]
+[(u'FAILURE', ZeroDivisionError(u'integer division or modulo by zero',)), (u'SUCCESS', u'success')]</code></pre>
+          </section>
+          <section>
+            <header>
+              <h2>Series</h2>
+            </header>
+            <pre><code class="python">>>> import tasks
+>>> result = (tasks.fail.s() | tasks.succeed.s()).delay()
+>>> result.state
+'PENDING'
+>>> result.parent.state
+'FAILURE'</code></pre>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h1>Monitoring</h1>
           </section>
         </section>
       </div>
