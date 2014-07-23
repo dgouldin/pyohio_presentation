@@ -1,1 +1,1 @@
-web: grunt serve --port $PORT
+web: node web.js
