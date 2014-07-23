@@ -21,6 +21,25 @@ body {
   max-height: 600px;
 }
 .reveal blockquote {
-  display: inline-block;
+  color: #56565d;
+  background-color: #f2f2f3;
+  font-style: normal;
+  padding: 20px;
+  margin: 0;
+  width: 100%;
+  text-align: left;
+}
+
+.reveal blockquote p {
+  line-height: 1.5em;
+}
+
+.reveal blockquote footer {
+  margin-top: 1em;
+  text-align: right;
+}
+
+.reveal blockquote p:first-child, .reveal blockquote p:last-child {
+  display: block;
 }
 

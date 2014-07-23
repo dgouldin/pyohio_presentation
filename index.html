@@ -66,12 +66,15 @@
               <h2>Atomic</h2>
             </header>
             <blockquote cite="http://en.wikipedia.org/wiki/Atomic_operation">
+              <p>
               &ldquo;An operation ...  is atomic ...  if it appears to the rest of
               the system to occur instantaneously. Atomicity is a guarantee of
               isolation from concurrent processes. Additionally, atomic operations
               commonly have a succeed-or-fail definition — they either
               successfully change the state of the system, or have no apparent
               effect.&rdquo;
+              </p>
+              <footer><cite>Wikipedia (Atomic Operation)</cite></footer>
             </blockquote>
           </section>
           <section>
@@ -79,9 +82,12 @@
               <h2>Idempotent</h2>
             </header>
             <blockquote cite="http://en.wikipedia.org/wiki/Idempotence">
+              <p>
               &ldquo;Idempotence is the property of certain operations in
               mathematics and computer science, that can be applied multiple times
               without changing the result beyond the initial application.&rdquo;
+              </p>
+              <footer><cite>Wikipedia (Idempotence)</cite></footer>
             </blockquote>
           </section>
           <section>
@@ -89,11 +95,14 @@
               <h2>Composable</h2>
             </header>
             <blockquote cite="http://en.wikipedia.org/wiki/Composability">
+              <p>
               &ldquo;A highly composable system provides recombinant components
               that can be selected and assembled in various combinations to
               satisfy specific user requirements. ... The
               essential features that make a component composable are that it be
               ... self-contained (modular) [and] stateless.&rdquo;
+              </p>
+              <footer><cite>Wikipedia (Composability)</cite></footer>
             </blockquote>
           </section>
         </section>
@@ -134,11 +143,14 @@
               <h2>Not RabbitMQ!</h2>
             </header>
             <blockquote cite="http://celery.readthedocs.org/en/latest/userguide/tasks.html#rabbitmq-result-backend">
+              <p>
               &ldquo;The RabbitMQ result backend (amqp) is special as it does not
               actually store the states, but rather sends them as messages. This
               is an important difference as it means that a result can only be
               retrieved once; If you have two processes waiting for the same
               result, one of the processes will never receive the result!&rdquo;
+              </p>
+              <footer><cite>Celery Documentation</cite></footer>
             </blockquote>
           </section>
           <section>
@@ -519,13 +531,18 @@ result = chain.delay()</code></pre>
               <h2>Use acks_late when possible</h2>
             </header>
             <blockquote cite="http://docs.celeryproject.org/en/master/reference/celery.app.task.html?#celery.app.task.Task.acks_late">
+              <p>
               &ldquo;When enabled messages for this task will be acknowledged
               after the task has been executed, and not just before which is the
               default behavior.
+              </p>
 
+              <p>
               Please note that this means the task may be executed twice if the
               worker crashes mid execution (which may be acceptable for some
               applications).&rdquo;
+              </p>
+              <footer><cite>Celery Documentation</cite></footer>
             </blockquote>
           </section>
         </section>
