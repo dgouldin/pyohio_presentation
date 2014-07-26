@@ -531,6 +531,22 @@ result = chain.delay()</code></pre>
             <header>
               <h2>Set soft & hard time limits</h2>
             </header>
+            <pre><code class="python">app.conf.update(CELERYD_TASK_SOFT_TIME_LIMIT=5,
+                CELERYD_TASK_TIME_LIMIT=8)
+
+@app.task
+def sleep(seconds):
+    time.sleep(seconds)
+
+@app.task
+def block(seconds):
+    thread = threading.Thread(target=time.sleep, args=(seconds,))
+    thread.start()
+    thread.join()
+
+>>> import tasks
+>>> tasks.sleep.delay(10) # hits soft timeout
+>>> tasks.block.delay(10) # hits hard timeout</code></pre>
           </section>
           <section>
             <header>
