@@ -45,6 +45,7 @@
 					<p>
 						by David Gouldin / <a href="http://twitter.com/dgouldin">@dgouldin</a>
 					</p>
+          <p><a href="http://celery-workflows.herokuapp.com/">celery-workflows.herokuapp.com</a></p>
 				</section>
 
         <section>
@@ -296,8 +297,8 @@ tasks.add(3)
           <section>
             <header>
               <h2>Under the hood</h2>
-              </header>
-              <pre><code class="python">class chain(Signature):
+            </header>
+            <pre><code class="python">class chain(Signature):
     def run(self):
         tasks, results = self.prepare_steps(args, self.tasks)
         tasks[0].apply_async(**options)
@@ -428,6 +429,9 @@ tasks.add(3)
 
           </section>
           <section>
+            <header>
+              <h2>Under the hood</h2>
+            </header>
             <pre><code class="python">@Signature.register_type
 class weave(Signature):
     def __init__(self, task, n, **options):
@@ -477,11 +481,11 @@ def usernames(user_ids):
             <header><h2>My friends' usernames</h2></header>
               <pre><code class="python">>>> from tasks import weave, friend_ids, usernames
 >>> result = (friend_ids.s('dgouldin') |
-              weave(usernames.s(), 10)).apply_async()
+              weave(usernames.s(), 100)).apply_async()
 >>> result.result
 [u'BiRiteCreamery', u'woodsbeer', u'AlJavieera', u'markasaurus', u'bayviewheight', u 'chrisdrackett', u'MikkellerBarSF', u'BeerHallSF', u'mdegerne', u'SimpsonsQOTD', u'PorcellinoSF', ...]
 >>> len(result.parent.children[0].results)
-50
+5
               </code></pre>
           </section>
         </section>
@@ -601,12 +605,13 @@ True
         </section>
 
         <section>
-          <section>
-            <h1>Monitoring</h1>
-          </section>
+          <h1>Questions</h1>
+          <h3 style="margin-top: 50px;">
+            (we're hiring)<br/>
+            <a href="http://jobs.heroku.com/">jobs.heroku.com</a>
+          </h3>
         </section>
       </div>
-
 		</div>
 
 		<script src="lib/js/head.min.js"></script>
