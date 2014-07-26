@@ -492,6 +492,37 @@ def usernames(user_ids):
 
         <section>
           <section>
+            <h1>When tasks fail</h1>
+          </section>
+          <section>
+            <header>
+              <h2>Parallel</h2>
+            </header>
+            <pre><code class="python">>>> from celery import group
+>>> import tasks
+>>> result = group(tasks.fail.s(), tasks.succeed.s()).delay()
+>>> result.ready()
+True
+>>> [r.state for r in result.results]
+[u'FAILURE', u'SUCCESS']
+>>> [(r.state, r.result) for r in result.results]
+[(u'FAILURE', ZeroDivisionError(u'integer division or modulo by zero',)), (u'SUCCESS', u'success')]</code></pre>
+          </section>
+          <section>
+            <header>
+              <h2>Series</h2>
+            </header>
+            <pre><code class="python">>>> import tasks
+>>> result = (tasks.fail.s() | tasks.succeed.s()).delay()
+>>> result.state
+'PENDING'
+>>> result.parent.state
+'FAILURE'</code></pre>
+          </section>
+        </section>
+
+        <section>
+          <section>
             <h1>Rules of thumb</h1>
           </section>
           <section>
@@ -570,37 +601,6 @@ def block(seconds):
               </p>
               <footer><cite>Celery Documentation</cite></footer>
             </blockquote>
-          </section>
-        </section>
-
-        <section>
-          <section>
-            <h1>When tasks fail</h1>
-          </section>
-          <section>
-            <header>
-              <h2>Parallel</h2>
-            </header>
-            <pre><code class="python">>>> from celery import group
->>> import tasks
->>> result = group(tasks.fail.s(), tasks.succeed.s()).delay()
->>> result.ready()
-True
->>> [r.state for r in result.results]
-[u'FAILURE', u'SUCCESS']
->>> [(r.state, r.result) for r in result.results]
-[(u'FAILURE', ZeroDivisionError(u'integer division or modulo by zero',)), (u'SUCCESS', u'success')]</code></pre>
-          </section>
-          <section>
-            <header>
-              <h2>Series</h2>
-            </header>
-            <pre><code class="python">>>> import tasks
->>> result = (tasks.fail.s() | tasks.succeed.s()).delay()
->>> result.state
-'PENDING'
->>> result.parent.state
-'FAILURE'</code></pre>
           </section>
         </section>
 
