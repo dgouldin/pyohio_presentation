@@ -112,20 +112,31 @@
               <h2>Tracking task state</h2>
             </header>
             <p>
-            [
-              PENDING
-              STARTED
-              SUCCESS
-              FAILURE
-              RETRY
+              PENDING &middot;
+              STARTED &middot;
+              SUCCESS &middot;
+              FAILURE &middot;
+              RETRY &middot;
               REVOKED
-            ]
             </p>
+            <pre><code class="python">>>> import tasks
+>>> result = tasks.add.delay(1, 2)
+>>> result.state
+'PENDING'
+>>> result.get()
+3
+>>> result.state
+u'SUCCESS'
+>>></code></pre>
           </section>
           <section>
             <header>
               <h2>Storing results</h2>
             </header>
+            <pre><code class="python">>>> import tasks
+>>> result = tasks.add.delay(1, 2)
+>>> result.result
+3</code></pre>
           </section>
         </section>
 
