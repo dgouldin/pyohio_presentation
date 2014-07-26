@@ -398,25 +398,6 @@ tasks.add(3)
             <h3>A custom Signature subclass</h3>
           </section>
           <section>
-            <pre><code class="python">@Signature.register_type
-class split(Signature):
-    def __init__(self, task, n, **options):
-        Signature.__init__(self, 'split', (),
-                           {'task': task, 'n': n}, **options)
-        self.subtask_type = 'split'
-
-    def apply_async(self, args=None, kwargs=None, **options):
-        args, kwargs, _ = self._merge(args=args, kwargs=kwargs)
-        it, = args
-        task, n = self._unpack_args(kwargs)
-        task = maybe_signature(task)
-        body = join.s()
-        body.freeze(self.freeze().task_id)
-
-        tasks = [tasks.clone(args=[p]) for p in chunks(iter(it), n)]
-        return chord(tasks, body).apply_async()</code></pre>
-          </section>
-          <section>
             <header>
               <h2>Split, parallel-process, & join</h2>
             </header>
@@ -434,6 +415,25 @@ class split(Signature):
                                 ↓
                        [2, 4, 6, 8, 10, 12]</code></pre>
 
+          </section>
+          <section>
+            <pre><code class="python">@Signature.register_type
+class weave(Signature):
+    def __init__(self, task, n, **options):
+        Signature.__init__(self, 'weave', (),
+                           {'task': task, 'n': n}, **options)
+        self.subtask_type = 'weave'
+
+    def apply_async(self, args=None, kwargs=None, **options):
+        args, kwargs, _ = self._merge(args=args, kwargs=kwargs)
+        it, = args
+        task, n = self._unpack_args(kwargs)
+        task = maybe_signature(task)
+        body = join.s()
+        body.freeze(self.freeze().task_id)
+
+        tasks = [tasks.clone(args=[p]) for p in chunks(iter(it), n)]
+        return chord(tasks, body).apply_async()</code></pre>
           </section>
         </section>
 
